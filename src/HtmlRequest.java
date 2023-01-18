@@ -28,7 +28,7 @@ public class HtmlRequest {
                 }
             }
             else {
-                sb.append("Error! This city was not found");
+                sb.append("Error! Response code: " + connection.getResponseCode());
             }
         }
         catch (Throwable cause){

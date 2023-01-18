@@ -3,11 +3,16 @@ import org.json.JSONObject;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 enum DialogState{
@@ -18,7 +23,7 @@ enum DialogState{
 
 public class Bot extends TelegramLongPollingBot {
 
-    private String current_location;
+    private String current_location[] = new String[3];
     private DialogState current_dialog;
 
     public Bot(DefaultBotOptions options){
@@ -41,32 +46,7 @@ public class Bot extends TelegramLongPollingBot {
 
         if (update.hasMessage()){
             Message message = update.getMessage();
-//            if (message.hasText()){
-//                HtmlRequest obj = new HtmlRequest();
-//                String url = "http://api.weatherapi.com/v1/current.json?key=0a642e967559402d83a192312231601&q=" + message.getText();
-//                StringBuilder weather = obj.getRequestResult(url);
-//
-//                JSONObject weatherJson = new JSONObject(weather.toString());
-//                String current_weather = (((weatherJson.getJSONObject("current")).getJSONObject("condition")).getString("text"));
-//
-//                try {
-//                    execute(SendMessage.builder()
-//                            .chatId(message.getChatId())
-//                            .text(
-//                                    EmojiParser.parseToUnicode(getWeatherIcon(weatherJson)) + "*" + (((weatherJson.getJSONObject("current")).getJSONObject("condition")).getString("text")) + "*" + "\n\n" +
-//                                    EmojiParser.parseToUnicode(":thermometer: ") + "Current temperature: " + (weatherJson.getJSONObject("current")).get("temp_c") + " C" + "\n" +
-//                                    EmojiParser.parseToUnicode(":thermometer: ") + "Feels like: " + (weatherJson.getJSONObject("current")).get("feelslike_c") + " C" + "\n\n" +
-//                                    EmojiParser.parseToUnicode(":dash: ") + "Wind speed: " + (weatherJson.getJSONObject("current")).get("wind_kph") + " km/h" + "\n\n" +
-//                                    EmojiParser.parseToUnicode(":droplet: ") + "Humidity: " + (weatherJson.getJSONObject("current")).get("humidity") + " %" + "\n" +
-//                                    EmojiParser.parseToUnicode(":sweat_drops: ") + "Pressure: " + (weatherJson.getJSONObject("current")).get("pressure_mb") + " mm Hg" + "\n"
-//                            )
-//                            .parseMode("Markdown")
-//                            .build());
-//                }
-//                catch (TelegramApiException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }
+
             if(message.hasText() && message.hasEntities()){
                 try {
                     handleMessage(message);
@@ -83,6 +63,13 @@ public class Bot extends TelegramLongPollingBot {
             }
             else{
                 System.out.println("Error");
+            }
+        }
+        if(update.hasCallbackQuery()){
+            try {
+                handleCallbackQuery(update.getCallbackQuery());
+            } catch (TelegramApiException e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -107,9 +94,30 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
+    private void handleCallbackQuery(CallbackQuery query) throws TelegramApiException {
+        Message message = query.getMessage();
+        String param = query.getData();
+
+        switch (param) {
+            case "CURRENT_WEATHER_BUTTON":
+                currentWeather(message);
+                break;
+            case "BACK_TO_MENU":
+                mainMenu(message);
+                break;
+            case "DAY_FORECAST_BUTTON":
+                dayForecast(message);
+                break;
+            default:
+                System.out.println("Can't detect inline button");
+                break;
+        }
+    }
+
     private void chooseLocation(Message message) throws TelegramApiException {
         HtmlRequest obj = new HtmlRequest();
-        String url = "http://api.weatherapi.com/v1/search.json?key=0a642e967559402d83a192312231601&q=" + message.getText();
+        String location_name = (message.getText()).replace(" ", "%20");
+        String url = "http://api.weatherapi.com/v1/search.json?key=0a642e967559402d83a192312231601&q=" + location_name;
         StringBuilder location = obj.getRequestResult(url);
 
         location.deleteCharAt(location.indexOf("["));
@@ -117,17 +125,19 @@ public class Bot extends TelegramLongPollingBot {
 
         if(location.length() > 1){
             JSONObject locationJson = new JSONObject(location.toString());
-            current_location = locationJson.getString("name");
+            current_location[0] = locationJson.getString("name");
+            current_location[1] = locationJson.getString("region");
+            current_location[2] = locationJson.getString("country");
             current_dialog = DialogState.LOCATION_DETECTED;
 
             execute(SendMessage.builder()
                     .chatId(message.getChatId())
                     .text(
-                            EmojiParser.parseToUnicode(":white_check_mark: ") + "Location was successfully found" + "\n\n" +
-                            EmojiParser.parseToUnicode(":round_pushpin: ") + "Your location: " +
-                            locationJson.getString("name") + ", " + locationJson.getString("region") + ", " + locationJson.getString("country")
+                            EmojiParser.parseToUnicode(":white_check_mark: ") + "Location was successfully found"
                     )
                     .build());
+
+            mainMenu(message);
         }
         else{
             execute(SendMessage.builder()
@@ -137,10 +147,119 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private String getWeatherIcon(JSONObject obj){
+    private void mainMenu(Message message) throws TelegramApiException {
+
+        List<List<InlineKeyboardButton>> rows_inline = new ArrayList<>();
+        List<InlineKeyboardButton> row_inline = new ArrayList<>();
+
+        var curr_weather_but = new InlineKeyboardButton();
+        curr_weather_but.setText("Current weather");
+        curr_weather_but.setCallbackData("CURRENT_WEATHER_BUTTON");
+
+        var day_forecast_but = new InlineKeyboardButton();
+        day_forecast_but.setText("Day forecast");
+        day_forecast_but.setCallbackData("DAY_FORECAST_BUTTON");
+
+        row_inline.add(curr_weather_but);
+        row_inline.add(day_forecast_but);
+        rows_inline.add(row_inline);
+
+        execute(SendMessage.builder()
+                .chatId(message.getChatId())
+                .text(
+                        "*Main menu* " + "\n\n" +
+                        EmojiParser.parseToUnicode(":round_pushpin: ") + "Your location: " +
+                        current_location[0] + ", " + current_location[1] + ", " + current_location[2] + "\n\n" +
+                        EmojiParser.parseToUnicode(":point_right: ") + "Please select below what information you would like to receive"
+                )
+                .parseMode("Markdown")
+                .replyMarkup(InlineKeyboardMarkup.builder().keyboard(rows_inline).build())
+                .build());
+
+    }
+
+    private void currentWeather(Message message){
+        HtmlRequest obj = new HtmlRequest();
+        String url = "http://api.weatherapi.com/v1/current.json?key=0a642e967559402d83a192312231601&q=" + current_location[0];
+        StringBuilder weather = obj.getRequestResult(url);
+
+        JSONObject weatherJson = new JSONObject(weather.toString());
+
+        List<List<InlineKeyboardButton>> back_to_menu = new ArrayList<>();
+        List<InlineKeyboardButton> back_to_menu_row = new ArrayList<>();
+
+        var back_to_menu_button = new InlineKeyboardButton();
+        back_to_menu_button.setText(EmojiParser.parseToUnicode(":pushpin: ")  + "Back to main menu");
+        back_to_menu_button.setCallbackData("BACK_TO_MENU");
+
+        back_to_menu_row.add(back_to_menu_button);
+        back_to_menu.add(back_to_menu_row);
+
+        try {
+            execute(SendMessage.builder()
+                    .chatId(message.getChatId())
+                    .text(
+                            EmojiParser.parseToUnicode(getWeatherIcon(((weatherJson.getJSONObject("current")).getJSONObject("condition")).getInt("code"))) + "*" + ((weatherJson.getJSONObject("current")).getJSONObject("condition")).getString("text") + "*" + "\n\n" +
+                            EmojiParser.parseToUnicode(":thermometer: ") + "Current temperature: " + (weatherJson.getJSONObject("current")).get("temp_c") + " °C" + "\n" +
+                            EmojiParser.parseToUnicode(":thermometer: ") + "Feels like: " + (weatherJson.getJSONObject("current")).get("feelslike_c") + " °C" + "\n\n" +
+                            EmojiParser.parseToUnicode(":dash: ") + "Wind speed: " + (weatherJson.getJSONObject("current")).get("wind_kph") + " km/h" + "\n\n" +
+                            EmojiParser.parseToUnicode(":droplet: ") + "Humidity: " + (weatherJson.getJSONObject("current")).get("humidity") + " %" + "\n" +
+                            EmojiParser.parseToUnicode(":sweat_drops: ") + "Pressure: " + (weatherJson.getJSONObject("current")).get("pressure_mb") + " mm Hg" + "\n"
+                    )
+                    .parseMode("Markdown")
+                    .replyMarkup(InlineKeyboardMarkup.builder().keyboard(back_to_menu).build())
+                    .build());
+        }
+        catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void dayForecast(Message message) {
+        HtmlRequest obj = new HtmlRequest();
+        String url = "http://api.weatherapi.com/v1/forecast.json?key=0a642e967559402d83a192312231601&q=" + current_location[0] + "&days=1";
+        StringBuilder weather = obj.getRequestResult(url);
+
+        JSONObject weatherJson = new JSONObject(weather.toString());
+
+        List<List<InlineKeyboardButton>> back_to_menu = new ArrayList<>();
+        List<InlineKeyboardButton> back_to_menu_row = new ArrayList<>();
+
+        var back_to_menu_button = new InlineKeyboardButton();
+        back_to_menu_button.setText(EmojiParser.parseToUnicode(":pushpin: ")  + "Back to main menu");
+        back_to_menu_button.setCallbackData("BACK_TO_MENU");
+
+        back_to_menu_row.add(back_to_menu_button);
+        back_to_menu.add(back_to_menu_row);
+
+        try {
+            execute(SendMessage.builder()
+                    .chatId(message.getChatId())
+                    .text(
+                            "*Daily forecast:*" + "\n\n" +
+                            EmojiParser.parseToUnicode(getWeatherIcon((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getJSONObject("condition")).getInt("code")))
+                                    + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getJSONObject("condition")).getString("text") + "\n\n" +
+                            EmojiParser.parseToUnicode(":thermometer: ") + "Average temperature: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getDouble("avgtemp_c") + " °C" + "\n" +
+                            EmojiParser.parseToUnicode(":thermometer: ") + "Min. temperature: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getDouble("mintemp_c") + " °C" + "\n" +
+                            EmojiParser.parseToUnicode(":thermometer: ") + "Max. temperature: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getDouble("maxtemp_c") + " °C" + "\n\n" +
+                            EmojiParser.parseToUnicode(":dash: ") + "Max. wind speed: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getDouble("maxwind_kph") + " km/h" + "\n" +
+                            EmojiParser.parseToUnicode(":droplet: ") + "Average humidity: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getDouble("avghumidity") + " %" + "\n\n" +
+                            EmojiParser.parseToUnicode(":cloud_rain: ") + "Chance of rain: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getDouble("daily_chance_of_rain") + " %" + "\n" +
+                            EmojiParser.parseToUnicode(":snowflake: ") + "Chance of snow: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getDouble("daily_chance_of_snow") + " %" + "\n"
+                    )
+                    .parseMode("Markdown")
+                    .replyMarkup(InlineKeyboardMarkup.builder().keyboard(back_to_menu).build())
+                    .build());
+        }
+        catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getWeatherIcon(int code){
         String str;
 
-        switch((((obj.getJSONObject("current")).getJSONObject("condition")).getInt("code"))){
+        switch(code){
             case (1000):
                 str = ":sunny: "; break;
             case (1003):
@@ -153,6 +272,8 @@ public class Bot extends TelegramLongPollingBot {
             case (1135):
                 str = ":fog: "; break;
             case (1063):
+            case (1150):
+            case (1153):
             case (1180):
             case (1183):
             case (1186):
@@ -195,8 +316,8 @@ public class Bot extends TelegramLongPollingBot {
             case (1276):
             case (1279):
             case (1282):
-                str = "::thunder_cloud_and_rain:: "; break;
-            default: str = "1"; break;
+                str = ":thunder_cloud_and_rain: "; break;
+            default: str = ":rainbow: "; break;
         }
 
         return str;
