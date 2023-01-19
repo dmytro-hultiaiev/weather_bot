@@ -109,6 +109,81 @@ public class Bot extends TelegramLongPollingBot {
                 dayForecast(message);
                 break;
             case "HOUR_FORECAST_BUTTON":
+                hourlyForecastMenu(message);
+                break;
+            case "HOUR_00":
+                hourForecast(message, 0);
+                break;
+            case "HOUR_01":
+                hourForecast(message, 1);
+                break;
+            case "HOUR_02":
+                hourForecast(message, 2);
+                break;
+            case "HOUR_03":
+                hourForecast(message, 3);
+                break;
+            case "HOUR_04":
+                hourForecast(message, 4);
+                break;
+            case "HOUR_05":
+                hourForecast(message, 5);
+                break;
+            case "HOUR_06":
+                hourForecast(message, 6);
+                break;
+            case "HOUR_07":
+                hourForecast(message, 7);
+                break;
+            case "HOUR_08":
+                hourForecast(message, 8);
+                break;
+            case "HOUR_09":
+                hourForecast(message, 9);
+                break;
+            case "HOUR_10":
+                hourForecast(message, 10);
+                break;
+            case "HOUR_11":
+                hourForecast(message, 11);
+                break;
+            case "HOUR_12":
+                hourForecast(message, 12);
+                break;
+            case "HOUR_13":
+                hourForecast(message, 13);
+                break;
+            case "HOUR_14":
+                hourForecast(message, 14);
+                break;
+            case "HOUR_15":
+                hourForecast(message, 15);
+                break;
+            case "HOUR_16":
+                hourForecast(message, 16);
+                break;
+            case "HOUR_17":
+                hourForecast(message, 17);
+                break;
+            case "HOUR_18":
+                hourForecast(message, 18);
+                break;
+            case "HOUR_19":
+                hourForecast(message, 19);
+                break;
+            case "HOUR_20":
+                hourForecast(message, 20);
+                break;
+            case "HOUR_21":
+                hourForecast(message, 21);
+                break;
+            case "HOUR_22":
+                hourForecast(message, 22);
+                break;
+            case "HOUR_23":
+                hourForecast(message, 23);
+                break;
+            case "SHOW_ALL_HOURS":
                 hourForecast(message);
                 break;
             case "DAY_3_FORECAST_BUTTON":
@@ -198,6 +273,109 @@ public class Bot extends TelegramLongPollingBot {
 
     }
 
+    private InlineKeyboardButton createHourlyButtons(String hour){
+        var obj = new InlineKeyboardButton();
+        obj.setText(hour + ":00");
+        obj.setCallbackData("HOUR_" + hour);
+
+        return obj;
+    }
+
+    private void hourlyForecastMenu(Message message) throws TelegramApiException {
+        List<List<InlineKeyboardButton>> rows_inline = new ArrayList<>();
+
+        List<InlineKeyboardButton> row_first_inline = new ArrayList<>();
+        List<InlineKeyboardButton> row_second_inline = new ArrayList<>();
+        List<InlineKeyboardButton> row_third_inline = new ArrayList<>();
+        List<InlineKeyboardButton> row_fourth_inline = new ArrayList<>();
+        List<InlineKeyboardButton> row_fifth_inline = new ArrayList<>();
+        List<InlineKeyboardButton> row_sixth_inline = new ArrayList<>();
+        List<InlineKeyboardButton> row_seventh_inline = new ArrayList<>();
+
+        var but_00 = createHourlyButtons("00");
+        var but_01 = createHourlyButtons("01");
+        var but_02 = createHourlyButtons("02");
+        var but_03 = createHourlyButtons("03");
+        var but_04 = createHourlyButtons("04");
+        var but_05 = createHourlyButtons("05");
+        var but_06 = createHourlyButtons("06");
+        var but_07 = createHourlyButtons("07");
+        var but_08 = createHourlyButtons("08");
+        var but_09 = createHourlyButtons("09");
+        var but_10 = createHourlyButtons("10");
+        var but_11 = createHourlyButtons("11");
+        var but_12 = createHourlyButtons("12");
+        var but_13 = createHourlyButtons("13");
+        var but_14 = createHourlyButtons("14");
+        var but_15 = createHourlyButtons("15");
+        var but_16 = createHourlyButtons("16");
+        var but_17 = createHourlyButtons("17");
+        var but_18 = createHourlyButtons("18");
+        var but_19 = createHourlyButtons("19");
+        var but_20 = createHourlyButtons("20");
+        var but_21 = createHourlyButtons("21");
+        var but_22 = createHourlyButtons("22");
+        var but_23 = createHourlyButtons("23");
+
+        var show_all = new InlineKeyboardButton();
+        show_all.setText("Show all hours");
+        show_all.setCallbackData("SHOW_ALL_HOURS");
+
+        var back_to_menu_button = new InlineKeyboardButton();
+        back_to_menu_button.setText("Back to main menu");
+        back_to_menu_button.setCallbackData("BACK_TO_MENU");
+
+        row_first_inline.add(but_00);
+        row_first_inline.add(but_01);
+        row_first_inline.add(but_02);
+        row_first_inline.add(but_03);
+
+        row_second_inline.add(but_04);
+        row_second_inline.add(but_05);
+        row_second_inline.add(but_06);
+        row_second_inline.add(but_07);
+
+        row_third_inline.add(but_08);
+        row_third_inline.add(but_09);
+        row_third_inline.add(but_10);
+        row_third_inline.add(but_11);
+
+        row_fourth_inline.add(but_12);
+        row_fourth_inline.add(but_13);
+        row_fourth_inline.add(but_14);
+        row_fourth_inline.add(but_15);
+
+        row_fifth_inline.add(but_16);
+        row_fifth_inline.add(but_17);
+        row_fifth_inline.add(but_18);
+        row_fifth_inline.add(but_19);
+
+        row_sixth_inline.add(but_20);
+        row_sixth_inline.add(but_21);
+        row_sixth_inline.add(but_22);
+        row_sixth_inline.add(but_23);
+
+        row_seventh_inline.add(show_all);
+        row_seventh_inline.add(back_to_menu_button);
+
+        rows_inline.add(row_first_inline);
+        rows_inline.add(row_second_inline);
+        rows_inline.add(row_third_inline);
+        rows_inline.add(row_fourth_inline);
+        rows_inline.add(row_fifth_inline);
+        rows_inline.add(row_sixth_inline);
+        rows_inline.add(row_seventh_inline);
+
+        execute(SendMessage.builder()
+                .chatId(message.getChatId())
+                .text(
+                    EmojiParser.parseToUnicode(":point_right: ") + "Please select the time you are interested in or display the hourly weather for the whole day"
+                )
+                .parseMode("Markdown")
+                .replyMarkup(InlineKeyboardMarkup.builder().keyboard(rows_inline).build())
+                .build());
+    }
+
     private void currentWeather(Message message){
         HtmlRequest obj = new HtmlRequest();
         String url = "http://api.weatherapi.com/v1/current.json?key=0a642e967559402d83a192312231601&q=" + current_location[0];
@@ -246,7 +424,7 @@ public class Bot extends TelegramLongPollingBot {
         List<InlineKeyboardButton> back_to_menu_row = new ArrayList<>();
 
         var back_to_menu_button = new InlineKeyboardButton();
-        back_to_menu_button.setText(EmojiParser.parseToUnicode(":pushpin: ")  + "Back to main menu");
+        back_to_menu_button.setText(EmojiParser.parseToUnicode(":pushpin: ") + "Back to main menu");
         back_to_menu_button.setCallbackData("BACK_TO_MENU");
 
         back_to_menu_row.add(back_to_menu_button);
@@ -276,6 +454,45 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
+    private void hourForecast(Message message, int num) {
+        HtmlRequest obj = new HtmlRequest();
+        String url = "http://api.weatherapi.com/v1/forecast.json?key=0a642e967559402d83a192312231601&q=" + current_location[0] + "&days=1";
+        StringBuilder weather = obj.getRequestResult(url);
+
+        JSONObject weatherJson = new JSONObject(weather.toString());
+
+        List<List<InlineKeyboardButton>> back_to_menu = new ArrayList<>();
+        List<InlineKeyboardButton> back_to_menu_row = new ArrayList<>();
+
+        var back_to_menu_button = new InlineKeyboardButton();
+        back_to_menu_button.setText(EmojiParser.parseToUnicode(":pushpin: ")  + "Back to main menu");
+        back_to_menu_button.setCallbackData("BACK_TO_MENU");
+
+        back_to_menu_row.add(back_to_menu_button);
+        back_to_menu.add(back_to_menu_row);
+
+        try {
+            execute(SendMessage.builder()
+                    .chatId(message.getChatId())
+                    .text(
+                            EmojiParser.parseToUnicode(":clock1: ") + "*" + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getString("time") + "*" + "\n\n" +
+                            EmojiParser.parseToUnicode(getWeatherIcon(((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getJSONObject("condition")).getInt("code"))) +
+                                ((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getJSONObject("condition")).getString("text") + "\n\n" +
+                            EmojiParser.parseToUnicode(":thermometer: ") + "Temperature: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getDouble("temp_c") + " °C" + "\n" +
+                            EmojiParser.parseToUnicode(":thermometer: ") + "Feels like: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getDouble("feelslike_c") + " °C" + "\n\n" +
+                            EmojiParser.parseToUnicode(":dash: ") + "Wind speed: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getDouble("wind_kph") + " km/h" + "\n\n" +
+                            EmojiParser.parseToUnicode(":cloud_rain: ") + "Chance of rain: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getDouble("chance_of_rain") + " %" + "\n" +
+                            EmojiParser.parseToUnicode(":snowflake: ") + "Chance of snow: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getDouble("chance_of_snow") + " %" + "\n\n"
+                    )
+                    .parseMode("Markdown")
+                    .replyMarkup(InlineKeyboardMarkup.builder().keyboard(back_to_menu).build())
+                    .build());
+        }
+        catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void hourForecast(Message message) {
         HtmlRequest obj = new HtmlRequest();
         String url = "http://api.weatherapi.com/v1/forecast.json?key=0a642e967559402d83a192312231601&q=" + current_location[0] + "&days=1";
@@ -295,16 +512,16 @@ public class Bot extends TelegramLongPollingBot {
 
         StringBuilder sb = new StringBuilder();
 
-        for(int i = 0; i < 24; i++){
+        for(int num = 0; num < 24; num++){
             sb.append(
-                    EmojiParser.parseToUnicode(":clock1: ") + "*" + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getString("time") + "*" + "\n\n" +
-                    EmojiParser.parseToUnicode(getWeatherIcon(((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getJSONObject("condition")).getInt("code"))) +
-                    ((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getJSONObject("condition")).getString("text") + "\n\n" +
-                    EmojiParser.parseToUnicode(":thermometer: ") + "Temperature: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getDouble("temp_c") + " °C" + "\n" +
-                    EmojiParser.parseToUnicode(":thermometer: ") + "Feels like: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getDouble("feelslike_c") + " °C" + "\n\n" +
-                    EmojiParser.parseToUnicode(":dash: ") + "Wind speed: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getDouble("wind_kph") + " km/h" + "\n\n" +
-                    EmojiParser.parseToUnicode(":cloud_rain: ") + "Chance of rain: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getDouble("chance_of_rain") + " %" + "\n" +
-                    EmojiParser.parseToUnicode(":snowflake: ") + "Chance of snow: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getDouble("chance_of_snow") + " %" + "\n\n"
+                    EmojiParser.parseToUnicode(":clock1: ") + "*" + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getString("time") + "*" + "\n\n" +
+                    EmojiParser.parseToUnicode(getWeatherIcon(((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getJSONObject("condition")).getInt("code"))) +
+                        ((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getJSONObject("condition")).getString("text") + "\n\n" +
+                    EmojiParser.parseToUnicode(":thermometer: ") + "Temperature: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getDouble("temp_c") + " °C" + "\n" +
+                    EmojiParser.parseToUnicode(":thermometer: ") + "Feels like: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getDouble("feelslike_c") + " °C" + "\n\n" +
+                    EmojiParser.parseToUnicode(":dash: ") + "Wind speed: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getDouble("wind_kph") + " km/h" + "\n\n" +
+                    EmojiParser.parseToUnicode(":cloud_rain: ") + "Chance of rain: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getDouble("chance_of_rain") + " %" + "\n" +
+                    EmojiParser.parseToUnicode(":snowflake: ") + "Chance of snow: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(num)).getDouble("chance_of_snow") + " %" + "\n\n"
             );
         }
 
