@@ -108,11 +108,18 @@ public class Bot extends TelegramLongPollingBot {
             case "DAY_FORECAST_BUTTON":
                 dayForecast(message);
                 break;
+            case "HOUR_FORECAST_BUTTON":
+                hourForecast(message);
+                break;
+            case "DAY_3_FORECAST_BUTTON":
+                threeDayForecast(message);
+                break;
             default:
                 System.out.println("Can't detect inline button");
                 break;
         }
     }
+
 
     private void chooseLocation(Message message) throws TelegramApiException {
         HtmlRequest obj = new HtmlRequest();
@@ -151,18 +158,31 @@ public class Bot extends TelegramLongPollingBot {
 
         List<List<InlineKeyboardButton>> rows_inline = new ArrayList<>();
         List<InlineKeyboardButton> row_inline = new ArrayList<>();
+        List<InlineKeyboardButton> row_second_inline = new ArrayList<>();
 
         var curr_weather_but = new InlineKeyboardButton();
         curr_weather_but.setText("Current weather");
         curr_weather_but.setCallbackData("CURRENT_WEATHER_BUTTON");
 
         var day_forecast_but = new InlineKeyboardButton();
-        day_forecast_but.setText("Day forecast");
+        day_forecast_but.setText("Daily forecast");
         day_forecast_but.setCallbackData("DAY_FORECAST_BUTTON");
+
+        var hour_forecast_but = new InlineKeyboardButton();
+        hour_forecast_but.setText("Hourly forecast");
+        hour_forecast_but.setCallbackData("HOUR_FORECAST_BUTTON");
+
+        var day_3_weather_forecast_but = new InlineKeyboardButton();
+        day_3_weather_forecast_but.setText("3 day weather forecast");
+        day_3_weather_forecast_but.setCallbackData("DAY_3_FORECAST_BUTTON");
 
         row_inline.add(curr_weather_but);
         row_inline.add(day_forecast_but);
+        row_second_inline.add(hour_forecast_but);
+        row_second_inline.add(day_3_weather_forecast_but);
+
         rows_inline.add(row_inline);
+        rows_inline.add(row_second_inline);
 
         execute(SendMessage.builder()
                 .chatId(message.getChatId())
@@ -200,7 +220,7 @@ public class Bot extends TelegramLongPollingBot {
                     .chatId(message.getChatId())
                     .text(
                             EmojiParser.parseToUnicode(getWeatherIcon(((weatherJson.getJSONObject("current")).getJSONObject("condition")).getInt("code"))) + "*" + ((weatherJson.getJSONObject("current")).getJSONObject("condition")).getString("text") + "*" + "\n\n" +
-                            EmojiParser.parseToUnicode(":thermometer: ") + "Current temperature: " + (weatherJson.getJSONObject("current")).get("temp_c") + " °C" + "\n" +
+                            EmojiParser.parseToUnicode(":thermometer: ") + "Temperature: " + (weatherJson.getJSONObject("current")).get("temp_c") + " °C" + "\n" +
                             EmojiParser.parseToUnicode(":thermometer: ") + "Feels like: " + (weatherJson.getJSONObject("current")).get("feelslike_c") + " °C" + "\n\n" +
                             EmojiParser.parseToUnicode(":dash: ") + "Wind speed: " + (weatherJson.getJSONObject("current")).get("wind_kph") + " km/h" + "\n\n" +
                             EmojiParser.parseToUnicode(":droplet: ") + "Humidity: " + (weatherJson.getJSONObject("current")).get("humidity") + " %" + "\n" +
@@ -236,7 +256,7 @@ public class Bot extends TelegramLongPollingBot {
             execute(SendMessage.builder()
                     .chatId(message.getChatId())
                     .text(
-                            "*Daily forecast:*" + "\n\n" +
+                            "*Daily forecast (" + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getString("date")) + ")*" + "\n\n" +
                             EmojiParser.parseToUnicode(getWeatherIcon((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getJSONObject("condition")).getInt("code")))
                                     + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getJSONObject("condition")).getString("text") + "\n\n" +
                             EmojiParser.parseToUnicode(":thermometer: ") + "Average temperature: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getDouble("avgtemp_c") + " °C" + "\n" +
@@ -247,6 +267,98 @@ public class Bot extends TelegramLongPollingBot {
                             EmojiParser.parseToUnicode(":cloud_rain: ") + "Chance of rain: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getDouble("daily_chance_of_rain") + " %" + "\n" +
                             EmojiParser.parseToUnicode(":snowflake: ") + "Chance of snow: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("day")).getDouble("daily_chance_of_snow") + " %" + "\n"
                     )
+                    .parseMode("Markdown")
+                    .replyMarkup(InlineKeyboardMarkup.builder().keyboard(back_to_menu).build())
+                    .build());
+        }
+        catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void hourForecast(Message message) {
+        HtmlRequest obj = new HtmlRequest();
+        String url = "http://api.weatherapi.com/v1/forecast.json?key=0a642e967559402d83a192312231601&q=" + current_location[0] + "&days=1";
+        StringBuilder weather = obj.getRequestResult(url);
+
+        JSONObject weatherJson = new JSONObject(weather.toString());
+
+        List<List<InlineKeyboardButton>> back_to_menu = new ArrayList<>();
+        List<InlineKeyboardButton> back_to_menu_row = new ArrayList<>();
+
+        var back_to_menu_button = new InlineKeyboardButton();
+        back_to_menu_button.setText(EmojiParser.parseToUnicode(":pushpin: ")  + "Back to main menu");
+        back_to_menu_button.setCallbackData("BACK_TO_MENU");
+
+        back_to_menu_row.add(back_to_menu_button);
+        back_to_menu.add(back_to_menu_row);
+
+        StringBuilder sb = new StringBuilder();
+
+        for(int i = 0; i < 24; i++){
+            sb.append(
+                    EmojiParser.parseToUnicode(":clock1: ") + "*" + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getString("time") + "*" + "\n\n" +
+                    EmojiParser.parseToUnicode(getWeatherIcon(((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getJSONObject("condition")).getInt("code"))) +
+                    ((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getJSONObject("condition")).getString("text") + "\n\n" +
+                    EmojiParser.parseToUnicode(":thermometer: ") + "Temperature: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getDouble("temp_c") + " °C" + "\n" +
+                    EmojiParser.parseToUnicode(":thermometer: ") + "Feels like: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getDouble("feelslike_c") + " °C" + "\n\n" +
+                    EmojiParser.parseToUnicode(":dash: ") + "Wind speed: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getDouble("wind_kph") + " km/h" + "\n\n" +
+                    EmojiParser.parseToUnicode(":cloud_rain: ") + "Chance of rain: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getDouble("chance_of_rain") + " %" + "\n" +
+                    EmojiParser.parseToUnicode(":snowflake: ") + "Chance of snow: " + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONArray("hour")).getJSONObject(i)).getDouble("chance_of_snow") + " %" + "\n\n"
+            );
+        }
+
+        try {
+            execute(SendMessage.builder()
+                    .chatId(message.getChatId())
+                    .text(sb.toString())
+                    .parseMode("Markdown")
+                    .replyMarkup(InlineKeyboardMarkup.builder().keyboard(back_to_menu).build())
+                    .build());
+        }
+        catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void threeDayForecast(Message message) {
+        HtmlRequest obj = new HtmlRequest();
+        String url = "http://api.weatherapi.com/v1/forecast.json?key=0a642e967559402d83a192312231601&q=" + current_location[0] + "&days=3";
+        StringBuilder weather = obj.getRequestResult(url);
+
+        JSONObject weatherJson = new JSONObject(weather.toString());
+
+        List<List<InlineKeyboardButton>> back_to_menu = new ArrayList<>();
+        List<InlineKeyboardButton> back_to_menu_row = new ArrayList<>();
+
+        var back_to_menu_button = new InlineKeyboardButton();
+        back_to_menu_button.setText(EmojiParser.parseToUnicode(":pushpin: ")  + "Back to main menu");
+        back_to_menu_button.setCallbackData("BACK_TO_MENU");
+
+        back_to_menu_row.add(back_to_menu_button);
+        back_to_menu.add(back_to_menu_row);
+
+        StringBuilder sb = new StringBuilder();
+
+        for(int i = 0; i < 3; i++){
+            sb.append(
+                    "*Weather forecast (" + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(i)).getString("date")) + ")*" + "\n\n" +
+                    EmojiParser.parseToUnicode(getWeatherIcon((((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(i)).getJSONObject("day")).getJSONObject("condition")).getInt("code")))
+                        + (((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(i)).getJSONObject("day")).getJSONObject("condition")).getString("text") + "\n\n" +
+                    EmojiParser.parseToUnicode(":thermometer: ") + "Average temperature: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(i)).getJSONObject("day")).getDouble("avgtemp_c") + " °C" + "\n" +
+                    EmojiParser.parseToUnicode(":thermometer: ") + "Min. temperature: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(i)).getJSONObject("day")).getDouble("mintemp_c") + " °C" + "\n" +
+                    EmojiParser.parseToUnicode(":thermometer: ") + "Max. temperature: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(i)).getJSONObject("day")).getDouble("maxtemp_c") + " °C" + "\n\n" +
+                    EmojiParser.parseToUnicode(":dash: ") + "Max. wind speed: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(i)).getJSONObject("day")).getDouble("maxwind_kph") + " km/h" + "\n" +
+                    EmojiParser.parseToUnicode(":droplet: ") + "Average humidity: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(i)).getJSONObject("day")).getDouble("avghumidity") + " %" + "\n\n" +
+                    EmojiParser.parseToUnicode(":cloud_rain: ") + "Chance of rain: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(i)).getJSONObject("day")).getDouble("daily_chance_of_rain") + " %" + "\n" +
+                    EmojiParser.parseToUnicode(":snowflake: ") + "Chance of snow: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(i)).getJSONObject("day")).getDouble("daily_chance_of_snow") + " %" + "\n\n"
+            );
+        }
+
+        try {
+            execute(SendMessage.builder()
+                    .chatId(message.getChatId())
+                    .text(sb.toString())
                     .parseMode("Markdown")
                     .replyMarkup(InlineKeyboardMarkup.builder().keyboard(back_to_menu).build())
                     .build());
