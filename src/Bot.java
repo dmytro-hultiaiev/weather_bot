@@ -189,12 +189,14 @@ public class Bot extends TelegramLongPollingBot {
             case "DAY_3_FORECAST_BUTTON":
                 threeDayForecast(message);
                 break;
+            case "ASTRO_FORECAST_BUTTON":
+                astroForecast(message);
+                break;
             default:
                 System.out.println("Can't detect inline button");
                 break;
         }
     }
-
 
     private void chooseLocation(Message message) throws TelegramApiException {
         HtmlRequest obj = new HtmlRequest();
@@ -234,6 +236,7 @@ public class Bot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rows_inline = new ArrayList<>();
         List<InlineKeyboardButton> row_inline = new ArrayList<>();
         List<InlineKeyboardButton> row_second_inline = new ArrayList<>();
+        List<InlineKeyboardButton> row_third_inline = new ArrayList<>();
 
         var curr_weather_but = new InlineKeyboardButton();
         curr_weather_but.setText("Current weather");
@@ -251,13 +254,19 @@ public class Bot extends TelegramLongPollingBot {
         day_3_weather_forecast_but.setText("3 day weather forecast");
         day_3_weather_forecast_but.setCallbackData("DAY_3_FORECAST_BUTTON");
 
+        var astro_forecast_but = new InlineKeyboardButton();
+        astro_forecast_but.setText("Astronomical forecast");
+        astro_forecast_but.setCallbackData("ASTRO_FORECAST_BUTTON");
+
         row_inline.add(curr_weather_but);
         row_inline.add(day_forecast_but);
         row_second_inline.add(hour_forecast_but);
         row_second_inline.add(day_3_weather_forecast_but);
+        row_third_inline.add(astro_forecast_but);
 
         rows_inline.add(row_inline);
         rows_inline.add(row_second_inline);
+        rows_inline.add(row_third_inline);
 
         execute(SendMessage.builder()
                 .chatId(message.getChatId())
@@ -583,6 +592,38 @@ public class Bot extends TelegramLongPollingBot {
         catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void astroForecast(Message message) throws TelegramApiException {
+        HtmlRequest obj = new HtmlRequest();
+        String url = "http://api.weatherapi.com/v1/forecast.json?key=0a642e967559402d83a192312231601&q=" + current_location[0] + "&days=1";
+        StringBuilder weather = obj.getRequestResult(url);
+
+        JSONObject weatherJson = new JSONObject(weather.toString());
+
+        List<List<InlineKeyboardButton>> back_to_menu = new ArrayList<>();
+        List<InlineKeyboardButton> back_to_menu_row = new ArrayList<>();
+
+        var back_to_menu_button = new InlineKeyboardButton();
+        back_to_menu_button.setText(EmojiParser.parseToUnicode(":pushpin: ")  + "Back to main menu");
+        back_to_menu_button.setCallbackData("BACK_TO_MENU");
+
+        back_to_menu_row.add(back_to_menu_button);
+        back_to_menu.add(back_to_menu_row);
+
+        execute(SendMessage.builder()
+                .chatId(message.getChatId())
+                .text(
+                    "*Astronomical forecast (" + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getString("date")) + ")*" + "\n\n" +
+                    EmojiParser.parseToUnicode(":sun_with_face: ") + "Sunrise: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("astro")).getString("sunrise") + "\n" +
+                    EmojiParser.parseToUnicode(":sun_with_face: ") + "Sunset: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("astro")).getString("sunset") + "\n\n" +
+                    EmojiParser.parseToUnicode(":full_moon_with_face: ") + "Moonrise: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("astro")).getString("moonrise") + "\n" +
+                    EmojiParser.parseToUnicode(":full_moon_with_face: ") + "Moonset: " + ((((weatherJson.getJSONObject("forecast")).getJSONArray("forecastday")).getJSONObject(0)).getJSONObject("astro")).getString("moonset")
+
+                )
+                .parseMode("Markdown")
+                .replyMarkup(InlineKeyboardMarkup.builder().keyboard(back_to_menu).build())
+                .build());
     }
 
     private String getWeatherIcon(int code){
